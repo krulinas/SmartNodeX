@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'summaryscreen.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -69,7 +70,21 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("SmartNodeX Dashboard")),
+      appBar: AppBar(
+        title: const Text("SmartNodeX Dashboard"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.analytics),
+            tooltip: 'View Summary',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SummaryScreen()),
+              );
+            },
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -123,24 +138,32 @@ class _MainScreenState extends State<MainScreen> {
                           leftTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
-                              interval: 20,
-                              getTitlesWidget: (value, _) =>
-                                  Text('${value.toInt()}%'),
+                              interval: 5,
+                              reservedSize: 32,
+                              getTitlesWidget: (value, _) => Text(
+                                  '${value.toInt()}°',
+                                  style: const TextStyle(fontSize: 10)),
                             ),
                           ),
                           bottomTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
                               interval: 5,
+                              reservedSize: 30,
                               getTitlesWidget: (value, _) {
                                 int index = value.toInt();
-                                return (index >= 0 && index < timeLabels.length)
-                                    ? Text(timeLabels[index],
-                                        style: const TextStyle(fontSize: 10))
-                                    : const Text('');
+                                if (index >= 0 && index < timeLabels.length) {
+                                  return Text(timeLabels[index],
+                                      style: const TextStyle(fontSize: 10));
+                                }
+                                return const Text('');
                               },
                             ),
                           ),
+                          topTitles: AxisTitles(
+                              sideTitles: SideTitles(showTitles: false)),
+                          rightTitles: AxisTitles(
+                              sideTitles: SideTitles(showTitles: false)),
                         ),
                         gridData: FlGridData(show: true),
                         borderData: FlBorderData(show: true),
@@ -155,6 +178,7 @@ class _MainScreenState extends State<MainScreen> {
                             belowBarData: BarAreaData(
                                 show: true,
                                 color: Colors.orange.withOpacity(0.2)),
+                            dotData: FlDotData(show: true),
                           ),
                         ],
                       ),

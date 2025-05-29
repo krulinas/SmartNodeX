@@ -3,7 +3,7 @@
 
 $host = "localhost";
 $username = "tensorfl_inas";
-$password = "#mUKHINSHRI26#";
+$password = " ";
 $database = "tensorfl_smartnodex";
 
 // Create connection

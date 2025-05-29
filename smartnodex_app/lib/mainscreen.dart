@@ -12,7 +12,9 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   List<FlSpot> tempData = [];
+  List<FlSpot> humData = [];
   String statusMessage = "Loading...";
+  String humidityStatus = "Loading...";
 
   Future<void> fetchSensorData() async {
     final response = await http.get(
@@ -22,20 +24,30 @@ class _MainScreenState extends State<MainScreen> {
     if (response.statusCode == 200) {
       final decoded = json.decode(response.body);
       final List<dynamic> jsonData = decoded['data'];
+
       setState(() {
         tempData = [];
+        humData = [];
         for (int i = 0; i < jsonData.length; i++) {
           final temp =
               double.tryParse(jsonData[i]['temperature'].toString()) ?? 0.0;
+          final hum =
+              double.tryParse(jsonData[i]['humidity'].toString()) ?? 0.0;
           tempData.add(FlSpot(i.toDouble(), temp));
+          humData.add(FlSpot(i.toDouble(), hum));
         }
+
         final lastTemp = tempData.last.y;
+        final lastHum = humData.last.y;
         statusMessage =
             lastTemp > 26.0 ? "⚠️ Alert: High Temp!" : "✅ Temperature Normal";
+        humidityStatus =
+            lastHum > 70 ? "⚠️ High Humidity!" : "✅ Humidity Normal";
       });
     } else {
       setState(() {
         statusMessage = "❌ Failed to load data.";
+        humidityStatus = "❌ Failed to load data.";
       });
     }
   }
@@ -59,19 +71,32 @@ class _MainScreenState extends State<MainScreen> {
               color: Colors.amber.shade100,
               child: Padding(
                 padding: const EdgeInsets.all(12.0),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.warning, color: Colors.orange),
-                    const SizedBox(width: 10),
-                    Expanded(
-                        child: Text(statusMessage,
-                            style: const TextStyle(fontSize: 16))),
+                    Row(children: [
+                      const Icon(Icons.thermostat, color: Colors.deepOrange),
+                      const SizedBox(width: 8),
+                      Expanded(
+                          child: Text(statusMessage,
+                              style: const TextStyle(fontSize: 16))),
+                    ]),
+                    const SizedBox(height: 8),
+                    Row(children: [
+                      const Icon(Icons.water_drop, color: Colors.blue),
+                      const SizedBox(width: 8),
+                      Expanded(
+                          child: Text(humidityStatus,
+                              style: const TextStyle(fontSize: 16))),
+                    ]),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 16),
-            const Text("Temperature Trend",
+
+            // Temperature Chart
+            const Text("Temperature Trend (°C)",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Expanded(
@@ -80,12 +105,11 @@ class _MainScreenState extends State<MainScreen> {
                   : LineChart(
                       LineChartData(
                         minY: 0,
-                        maxY: 40,
+                        maxY: 50,
                         titlesData: FlTitlesData(
                           leftTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
-                              reservedSize: 40,
                               interval: 5,
                               getTitlesWidget: (value, _) =>
                                   Text('${value.toInt()}°'),
@@ -93,23 +117,12 @@ class _MainScreenState extends State<MainScreen> {
                           ),
                           bottomTitles: AxisTitles(
                             sideTitles: SideTitles(
-                              showTitles: true,
-                              interval: 10,
-                              getTitlesWidget: (value, _) =>
-                                  Text(value.toInt().toString()),
+                              showTitles: false,
                             ),
                           ),
                         ),
-                        gridData: FlGridData(
-                          show: true,
-                          drawVerticalLine: true,
-                          verticalInterval: 10,
-                          horizontalInterval: 5,
-                          getDrawingHorizontalLine: (_) => FlLine(
-                              color: Colors.grey.shade300, strokeWidth: 1),
-                          getDrawingVerticalLine: (_) => FlLine(
-                              color: Colors.grey.shade300, strokeWidth: 1),
-                        ),
+                        gridData: FlGridData(show: true),
+                        borderData: FlBorderData(show: true),
                         lineBarsData: [
                           LineChartBarData(
                             spots: tempData.length > 30
@@ -121,24 +134,71 @@ class _MainScreenState extends State<MainScreen> {
                             belowBarData: BarAreaData(
                                 show: true,
                                 color: Colors.orange.withOpacity(0.2)),
-                            dotData: FlDotData(show: true),
                           ),
                         ],
-                        borderData: FlBorderData(show: true),
                       ),
                     ),
             ),
+
+            const SizedBox(height: 24),
+
+            // Humidity Chart
+            const Text("Humidity Trend (%)",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Expanded(
+              child: humData.isEmpty
+                  ? const Center(child: CircularProgressIndicator())
+                  : LineChart(
+                      LineChartData(
+                        minY: 0,
+                        maxY: 100,
+                        titlesData: FlTitlesData(
+                          leftTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              interval: 10,
+                              getTitlesWidget: (value, _) =>
+                                  Text('${value.toInt()}%'),
+                            ),
+                          ),
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: false,
+                            ),
+                          ),
+                        ),
+                        gridData: FlGridData(show: true),
+                        borderData: FlBorderData(show: true),
+                        lineBarsData: [
+                          LineChartBarData(
+                            spots: humData.length > 30
+                                ? humData.sublist(humData.length - 30)
+                                : humData,
+                            isCurved: true,
+                            color: Colors.blue,
+                            barWidth: 3,
+                            belowBarData: BarAreaData(
+                                show: true,
+                                color: Colors.blue.withOpacity(0.2)),
+                          ),
+                        ],
+                      ),
+                    ),
+            ),
+
             const SizedBox(height: 16),
+
             Center(
               child: ElevatedButton(
                 onPressed: fetchSensorData,
-                child: const Text("Refresh"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.deepOrange,
                   foregroundColor: Colors.white,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 ),
+                child: const Text("Refresh"),
               ),
             ),
           ],

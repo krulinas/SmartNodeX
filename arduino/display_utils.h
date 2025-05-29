@@ -53,13 +53,14 @@ void showWiFiSuccessScreen() {
 }
 
 // 3-line OLED display
-void updateDisplay(String line1, String line2, String line3) {
+void updateDisplay(String line1, String line2, String line3, String line4) {
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(WHITE);
   display.setCursor(0, 0);  display.println(line1);
   display.setCursor(0, 8);  display.println(line2);
   display.setCursor(0, 16); display.println(line3);
+  display.setCursor(0, 24); display.println(line4);
   display.display();
 }
 

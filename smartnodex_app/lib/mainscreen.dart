@@ -49,9 +49,9 @@ class _MainScreenState extends State<MainScreen> {
         latestTimestamp = jsonData.last['timestamp'];
 
         statusMessage =
-            lastTemp > 26.0 ? "⚠️ Alert: High Temp!" : "✅ Temperature Normal";
+            lastTemp > 35.0 ? "⚠️ Alert: High Temp!" : "✅ Temperature Normal";
         humidityStatus =
-            lastHum > 70 ? "⚠️ High Humidity!" : "✅ Humidity Normal";
+            lastHum > 97 ? "⚠️ High Humidity!" : "✅ Humidity Normal";
       });
     } else {
       setState(() {

@@ -7,8 +7,8 @@
 #define DHTTYPE DHT11    // DHT 11
 #define RELAY_PIN 26     // Updated to your relay pin (D26)
 
-#define TEMP_THRESHOLD 26.0
-#define HUMIDITY_THRESHOLD 70.0
+#define TEMP_THRESHOLD 35.0
+#define HUMIDITY_THRESHOLD 97.0
 
 DHT dht(DHTPIN, DHTTYPE);
 

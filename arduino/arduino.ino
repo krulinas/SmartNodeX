@@ -66,10 +66,12 @@ void loop() {
     float hum = readHumidity();
     bool relayActive = digitalRead(RELAY_PIN);
 
-    String line1 = "Temp: " + String(temp);
-    String line2 = "Hum: " + String(hum);
+    String line1 = "Temp: " + String(temp) + " C";
+    String line2 = "Hum: " + String(hum) + " %";
     String line3 = relayActive ? (blinkOn ? "Relay Activated" : "") : "Relay Offline";
+    String line4 = (temp > TEMP_THRESHOLD || hum > HUMIDITY_THRESHOLD) ? "ALERT!" : "Normal";
 
-    updateDisplay(line1, line2, line3);
+
+    updateDisplay(line1, line2, line3, line4);
   }
 }

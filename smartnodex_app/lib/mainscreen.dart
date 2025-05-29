@@ -13,6 +13,8 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   List<FlSpot> tempData = [];
   List<FlSpot> humData = [];
+  List<String> timeLabels = [];
+  String latestTimestamp = "Unknown";
   String statusMessage = "Loading...";
   String humidityStatus = "Loading...";
 
@@ -28,17 +30,23 @@ class _MainScreenState extends State<MainScreen> {
       setState(() {
         tempData = [];
         humData = [];
+        timeLabels = [];
+
         for (int i = 0; i < jsonData.length; i++) {
-          final temp =
-              double.tryParse(jsonData[i]['temperature'].toString()) ?? 0.0;
-          final hum =
-              double.tryParse(jsonData[i]['humidity'].toString()) ?? 0.0;
+          final entry = jsonData[i];
+          final temp = double.tryParse(entry['temperature'].toString()) ?? 0.0;
+          final hum = double.tryParse(entry['humidity'].toString()) ?? 0.0;
+          final ts = entry['timestamp'].toString();
+
           tempData.add(FlSpot(i.toDouble(), temp));
           humData.add(FlSpot(i.toDouble(), hum));
+          timeLabels.add(ts.substring(11, 16)); // extract just HH:MM
         }
 
         final lastTemp = tempData.last.y;
         final lastHum = humData.last.y;
+        latestTimestamp = jsonData.last['timestamp'];
+
         statusMessage =
             lastTemp > 26.0 ? "⚠️ Alert: High Temp!" : "✅ Temperature Normal";
         humidityStatus =
@@ -93,6 +101,11 @@ class _MainScreenState extends State<MainScreen> {
                 ),
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.only(top: 12.0, bottom: 8.0),
+              child: Text("Last update: $latestTimestamp",
+                  style: const TextStyle(fontSize: 14, color: Colors.grey)),
+            ),
             const SizedBox(height: 16),
 
             // Temperature Chart
@@ -110,14 +123,22 @@ class _MainScreenState extends State<MainScreen> {
                           leftTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
-                              interval: 5,
+                              interval: 20,
                               getTitlesWidget: (value, _) =>
-                                  Text('${value.toInt()}°'),
+                                  Text('${value.toInt()}%'),
                             ),
                           ),
                           bottomTitles: AxisTitles(
                             sideTitles: SideTitles(
-                              showTitles: false,
+                              showTitles: true,
+                              interval: 5,
+                              getTitlesWidget: (value, _) {
+                                int index = value.toInt();
+                                return (index >= 0 && index < timeLabels.length)
+                                    ? Text(timeLabels[index],
+                                        style: const TextStyle(fontSize: 10))
+                                    : const Text('');
+                              },
                             ),
                           ),
                         ),
@@ -157,16 +178,32 @@ class _MainScreenState extends State<MainScreen> {
                           leftTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
-                              interval: 10,
-                              getTitlesWidget: (value, _) =>
-                                  Text('${value.toInt()}%'),
+                              interval: 20,
+                              getTitlesWidget: (value, _) => Text(
+                                  '${value.toInt()}%',
+                                  style: const TextStyle(fontSize: 10)),
+                              reservedSize: 32,
                             ),
                           ),
                           bottomTitles: AxisTitles(
                             sideTitles: SideTitles(
-                              showTitles: false,
+                              showTitles: true,
+                              interval: 5,
+                              getTitlesWidget: (value, _) {
+                                int index = value.toInt();
+                                if (index >= 0 && index < timeLabels.length) {
+                                  return Text(timeLabels[index],
+                                      style: const TextStyle(fontSize: 10));
+                                }
+                                return const Text('');
+                              },
+                              reservedSize: 30,
                             ),
                           ),
+                          topTitles: AxisTitles(
+                              sideTitles: SideTitles(showTitles: false)),
+                          rightTitles: AxisTitles(
+                              sideTitles: SideTitles(showTitles: false)),
                         ),
                         gridData: FlGridData(show: true),
                         borderData: FlBorderData(show: true),
@@ -181,6 +218,7 @@ class _MainScreenState extends State<MainScreen> {
                             belowBarData: BarAreaData(
                                 show: true,
                                 color: Colors.blue.withOpacity(0.2)),
+                            dotData: FlDotData(show: true),
                           ),
                         ],
                       ),
